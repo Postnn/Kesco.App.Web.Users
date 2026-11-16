@@ -1,0 +1,102 @@
+@page "/search"
+@using Clayzor.Lib.Web.Settings
+@using Kesco.App.Web.Users.Models
+@using Microsoft.AspNetCore.WebUtilities
+@inherits ClayGridPageBase<EmployeeSearchEntity>
+@inject ClayAppSettings AppSettings
+
+<PageTitle>Поиск сотрудников</PageTitle>
+
+<ClayGrid TEntity="IClayGridRow"
+          @ref="_dataGrid"
+          Options="_gridOptions"
+          DataLoader="this"
+          Items="_rows"
+          Loading="_loading"
+          TotalCount="@_query.TotalCount"
+          PageNumber="@_query.PageNumber"
+          OnGroupToggle="ToggleGroup">
+    <ColumnDefs>
+        <ClayColumnDef ColumnId="1" SqlName="Name"   DisplayName="Сотрудник" Filterable="true" />
+        <ClayColumnDef ColumnId="2" SqlName="NameEn" DisplayName="Имя на английском" Filterable="true" />
+        @if (_returnMode)
+        {
+            <ClayColumnDef ColumnId="3" SqlName="Id" DisplayName="Действие" />
+        }
+    </ColumnDefs>
+    <Columns>
+        <ClayColumn TEntity="IClayGridRow" ColumnId="1">
+            <CellTemplate>
+                @if (context.Item is DetailRow<EmployeeSearchEntity> detail)
+                {
+                    @detail.Item.Name
+                }
+            </CellTemplate>
+        </ClayColumn>
+        <ClayColumn TEntity="IClayGridRow" ColumnId="2">
+            <CellTemplate>
+                @if (context.Item is DetailRow<EmployeeSearchEntity> detail)
+                {
+                    @detail.Item.NameEn
+                }
+            </CellTemplate>
+        </ClayColumn>
+        @if (_returnMode)
+        {
+            <ClayColumn TEntity="IClayGridRow" ColumnId="3">
+                <CellTemplate>
+                    @if (context.Item is DetailRow<EmployeeSearchEntity> detail)
+                    {
+                        <MudButton Variant="Variant.Text" Color="Color.Primary"
+                                   OnClick="() => ReturnEmployeeAsync(detail.Item)">
+                            Выбрать
+                        </MudButton>
+                    }
+                </CellTemplate>
+            </ClayColumn>
+        }
+    </Columns>
+</ClayGrid>
+
+@code {
+    private ClayGrid<IClayGridRow> _dataGrid = null!;
+    private ClayGridOptions _gridOptions = null!;
+    private bool _returnMode;
+    private string _requestId = string.Empty;
+
+    /// <summary>Ссылка на грид для базового загрузчика данных.</summary>
+    protected override IClayGrid? Grid => _dataGrid;
+
+    /// <summary>Читает режим возврата и создаёт настройки серверного грида.</summary>
+    protected override void OnInitialized()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        _returnMode = query["return"] == "1";
+        _requestId = query["requestId"].ToString();
+        _gridOptions = new ClayGridOptions
+        {
+            Title = "Поиск сотрудников",
+            Id = "users-search-grid",
+            SelectSql = SQLQueries.SELECT_СотрудникиДляПоиска,
+            SearchColumns = ["Name", "NameEn"],
+            DefaultOrder = "Name",
+            PageSize = AppSettings.DefaultPageSize,
+            ShowAddButton = false,
+            ShowPagination = true,
+            FilterColumnTypes = FilterColumnTypes,
+        };
+    }
+
+    private async Task ReturnEmployeeAsync(EmployeeSearchEntity employee)
+    {
+        if (string.IsNullOrWhiteSpace(_requestId))
+        {
+            Snackbar.Add("Идентификатор запроса возврата не задан", Severity.Error);
+            return;
+        }
+
+        var returned = await JS.InvokeAsync<bool>("claySelectAdvancedSearch.returnValue", _requestId, employee.Id);
+        if (!returned)
+            Snackbar.Add("Не удалось вернуть значение в форму-источник", Severity.Error);
+    }
+}
