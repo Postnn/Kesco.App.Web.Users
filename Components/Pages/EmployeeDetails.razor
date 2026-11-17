@@ -59,12 +59,16 @@ else if (_employee is not null)
         if (id <= 0 || version != _loadVersion)
             return;
 
-        var employee = (await Db.QueryAsync<Employee>(
-            SQLQueries.SELECT_СотрудникПоИдентификатору,
-            new { Id = id })).SingleOrDefault();
+        var employee = await GetEmployeeAsync(id);
         if (version == _loadVersion)
             _employee = employee;
     }
+
+    /// <summary>Получает сотрудника по идентификатору; выделено для проверки гонок загрузки.</summary>
+    protected virtual async Task<Employee?> GetEmployeeAsync(int id) =>
+        (await Db.QueryAsync<Employee>(
+            SQLQueries.SELECT_СотрудникПоИдентификатору,
+            new { Id = id })).SingleOrDefault();
 
     private async Task RunBusyAsync(int version, Func<Task> work)
     {
