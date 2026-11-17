@@ -73,12 +73,14 @@
         var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
         _returnMode = query["return"] == "1";
         _requestId = query["requestId"].ToString();
+        _query.SearchText = query["search"].ToString();
         _gridOptions = new ClayGridOptions
         {
             Title = "Поиск сотрудников",
             Id = "users-search-grid",
             SelectSql = SQLQueries.SELECT_СотрудникиДляПоиска,
             SearchColumns = ["Name", "NameEn"],
+            InitialSearchText = _query.SearchText,
             DefaultOrder = "Name",
             PageSize = AppSettings.DefaultPageSize,
             ShowAddButton = false,

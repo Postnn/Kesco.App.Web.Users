@@ -1,0 +1,91 @@
+@page "/user"
+@using Clayzor.Lib.DALC
+@using Clayzor.Lib.Entities.Inventory
+@inject DbManager Db
+
+<PageTitle>Сотрудник</PageTitle>
+
+<MudText Typo="Typo.h5" Class="mb-4">Сотрудник</MudText>
+
+@if (!_loading && _employee is null)
+{
+    <MudAlert Severity="Severity.Warning">Сотрудник с указанным идентификатором не найден.</MudAlert>
+}
+else if (_employee is not null)
+{
+    <MudPaper Class="pa-4" MaxWidth="600px">
+        <MudStack Spacing="3">
+            <MudTextField T="string" Label="Идентификатор" Value="@_employee.Id.ToString()"
+                          ReadOnly="true" Variant="Variant.Outlined" />
+            <MudTextField T="string" Label="Сотрудник" Value="@_employee.Name"
+                          ReadOnly="true" Variant="Variant.Outlined" />
+            <MudTextField T="string" Label="Имя на английском" Value="@_employee.NameEn"
+                          ReadOnly="true" Variant="Variant.Outlined" />
+        </MudStack>
+    </MudPaper>
+}
+
+<MudOverlay Visible="@_loading" DarkBackground="true">
+    <div class="clay-busy">
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        <span>Загрузка сотрудника…</span>
+    </div>
+</MudOverlay>
+
+@code {
+    private Employee? _employee;
+    private bool _loading = true;
+    private int _loadedId = int.MinValue;
+    private int _loadVersion;
+
+    /// <summary>Идентификатор сотрудника из параметра запроса id.</summary>
+    [SupplyParameterFromQuery]
+    public int Id { get; set; }
+
+    /// <summary>Загружает сотрудника при первом отображении и при каждом изменении id.</summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_loadedId == Id)
+            return;
+
+        _loadedId = Id;
+        _employee = null;
+        var version = ++_loadVersion;
+        await RunBusyAsync(version, () => LoadEmployeeAsync(Id, version));
+    }
+
+    private async Task LoadEmployeeAsync(int id, int version)
+    {
+        if (id <= 0 || version != _loadVersion)
+            return;
+
+        var employee = await GetEmployeeAsync(id);
+        if (version == _loadVersion)
+            _employee = employee;
+    }
+
+    /// <summary>Получает сотрудника по идентификатору; выделено для проверки гонок загрузки.</summary>
+    protected virtual async Task<Employee?> GetEmployeeAsync(int id) =>
+        (await Db.QueryAsync<Employee>(
+            SQLQueries.SELECT_СотрудникПоИдентификатору,
+            new { Id = id })).SingleOrDefault();
+
+    private async Task RunBusyAsync(int version, Func<Task> work)
+    {
+        _loading = true;
+        StateHasChanged();
+        await Task.Delay(100);
+        try
+        {
+            await work();
+        }
+        finally
+        {
+            if (version == _loadVersion)
+            {
+                _loading = false;
+                StateHasChanged();
+            }
+        }
+    }
+}
