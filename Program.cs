@@ -20,6 +20,7 @@ builder.Services.AddScoped<ClayErrorService>();
 builder.Services.AddScoped<ISqlErrorHandler>(sp => sp.GetRequiredService<ClayErrorService>());
 builder.Services.AddScoped<DbManager>(sp => new DbManager(claySettings.ConnectionString, sp.GetRequiredService<ISqlErrorHandler>()));
 builder.Services.AddScoped<ClayDbReconnectService>();
+builder.Services.AddScoped<ClayFormWindowService>();
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNegotiate();
 builder.Services.AddAuthorization(options => options.FallbackPolicy = options.DefaultPolicy);
