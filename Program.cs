@@ -1,5 +1,4 @@
 using Clayzor.Lib.DALC;
-using Clayzor.Lib.Entities.Inventory;
 using Clayzor.Lib.Entities.MedicalTests;
 using Clayzor.Lib.Web.Controls;
 using Clayzor.Lib.Web.Controls.Services;
@@ -28,10 +27,8 @@ builder.Services.AddScoped<ClayFormWindowService>();
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNegotiate();
 builder.Services.AddAuthorization(options => options.FallbackPolicy = options.DefaultPolicy);
 builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<ClayThemeState>();
-builder.Services.AddScoped<IClayThemePreferenceStore>(sp => new InventoryThemePreferenceStore(
-    async () => (await sp.GetRequiredService<AuthenticationStateProvider>().GetAuthenticationStateAsync()).User,
-    claySettings, ClayThemeSettingsData.UsersParameter));
+builder.Services.AddInventoryThemePreferences(async sp =>
+    (await sp.GetRequiredService<AuthenticationStateProvider>().GetAuthenticationStateAsync()).User);
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddMudServices();
