@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 @using Clayzor.Lib.Web.Controls.Themes
 
-<MudThemeProvider Theme="_theme" />
+<ClayThemeHost />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -10,6 +10,8 @@
     <MudAppBar Elevation="0" Dense="true">
         <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-2" />
         <MudText Typo="Typo.h6">Пользователи</MudText>
+        <MudSpacer />
+        <ClayThemeSelector />
     </MudAppBar>
     <MudMainContent Class="pa-6">
         <ClayErrorBar />
@@ -17,7 +19,3 @@
         @Body
     </MudMainContent>
 </MudLayout>
-
-@code {
-    private readonly MudTheme _theme = ClayTheme.Create();
-}

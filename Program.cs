@@ -1,10 +1,13 @@
 using Clayzor.Lib.DALC;
+using Clayzor.Lib.Entities.Inventory;
 using Clayzor.Lib.Entities.MedicalTests;
 using Clayzor.Lib.Web.Controls;
 using Clayzor.Lib.Web.Controls.Services;
+using Clayzor.Lib.Web.Controls.Themes;
 using Clayzor.Lib.Web.Settings;
 using Kesco.App.Web.Users.Components;
 using Microsoft.AspNetCore.Authentication.Negotiate;
+using Microsoft.AspNetCore.Components.Authorization;
 using MudBlazor.Extensions;
 using MudBlazor.Extensions.Options;
 using MudBlazor.Services;
@@ -24,6 +27,11 @@ builder.Services.AddScoped<ClayFormWindowService>();
 
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme).AddNegotiate();
 builder.Services.AddAuthorization(options => options.FallbackPolicy = options.DefaultPolicy);
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<ClayThemeState>();
+builder.Services.AddScoped<IClayThemePreferenceStore>(sp => new InventoryThemePreferenceStore(
+    async () => (await sp.GetRequiredService<AuthenticationStateProvider>().GetAuthenticationStateAsync()).User,
+    claySettings, ClayThemeSettingsData.UsersParameter));
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddMudServices();
