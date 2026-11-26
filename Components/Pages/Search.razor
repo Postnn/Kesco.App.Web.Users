@@ -71,9 +71,9 @@
     protected override void OnInitialized()
     {
         var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
-        _returnMode = query["return"] == "1";
-        _requestId = query["requestId"].ToString();
-        _query.SearchText = query["search"].ToString();
+        _returnMode = query.GetValueOrDefault("return") == "1";
+        _requestId = query.GetValueOrDefault("requestId").ToString();
+        _query.SearchText = query.GetValueOrDefault("search").ToString();
         _gridOptions = new ClayGridOptions
         {
             Title = "Поиск сотрудников",
